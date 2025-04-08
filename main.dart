@@ -1,23 +1,18 @@
 import 'package:flutter/material.dart';
-import 'auth_screen.dart';
+import 'data_management_screen.dart'; // Ensure this file exists
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Auth Demo',
-      debugShowCheckedModeBanner: false, // This removes the debug banner
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      home: const AuthScreen(),
+      title: 'Data Management App',
+      debugShowCheckedModeBanner: false, // ✅ Hides the DEBUG banner
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: DataManagementScreen(), // Main screen of the app
     );
   }
 }
