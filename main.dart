@@ -74,14 +74,52 @@ class SubmitGradeScreen extends StatefulWidget {
 class _SubmitGradeScreenState extends State<SubmitGradeScreen> {
   final _formKey = GlobalKey<FormState>();
   final _userIdController = TextEditingController();
-  final _courseController = TextEditingController();
   final _semesterNoController = TextEditingController();
   final _creditsController = TextEditingController();
   final _marksController = TextEditingController();
   bool _isSubmitting = false;
 
+  // Course dropdown state
+  List<dynamic> _courses = [];
+  String? _selectedCourseId;
+  String? _selectedCourseName;
+  bool _isLoadingCourses = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCourses();
+  }
+
+  Future<void> _loadCourses() async {
+    setState(() => _isLoadingCourses = true);
+
+    try {
+      final response = await http.get(
+        Uri.parse('https://bgnuerp.online/api/get_courses?user_id=12122'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data is List) {
+          setState(() => _courses = data);
+        }
+      } else {
+        _showError('Failed to load courses (Error ${response.statusCode})');
+      }
+    } catch (e) {
+      _showError('Failed to load courses: ${e.toString()}');
+    } finally {
+      setState(() => _isLoadingCourses = false);
+    }
+  }
+
   Future<void> _submitGrade() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedCourseId == null) {
+      _showError('Please select a course');
+      return;
+    }
 
     setState(() => _isSubmitting = true);
 
@@ -91,7 +129,8 @@ class _SubmitGradeScreenState extends State<SubmitGradeScreen> {
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': _userIdController.text,
-          'course_name': _courseController.text,
+          'course_id': _selectedCourseId,
+          'course_name': _selectedCourseName,
           'semester_no': _semesterNoController.text,
           'credit_hours': _creditsController.text,
           'marks': _marksController.text,
@@ -101,6 +140,10 @@ class _SubmitGradeScreenState extends State<SubmitGradeScreen> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         _showSuccess('Grade submitted successfully');
         _formKey.currentState?.reset();
+        setState(() {
+          _selectedCourseId = null;
+          _selectedCourseName = null;
+        });
       } else {
         _handleErrorResponse(response);
       }
@@ -157,7 +200,10 @@ class _SubmitGradeScreenState extends State<SubmitGradeScreen> {
           children: [
             _buildTextField(_userIdController, 'User ID', Icons.person),
             const SizedBox(height: 15),
-            _buildTextField(_courseController, 'Course Name', Icons.school),
+
+            // Course Dropdown
+            _buildCourseDropdown(),
+
             const SizedBox(height: 15),
             _buildTextField(_semesterNoController, 'Semester Number',
                 Icons.format_list_numbered),
@@ -184,6 +230,40 @@ class _SubmitGradeScreenState extends State<SubmitGradeScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildCourseDropdown() {
+    return _isLoadingCourses
+        ? const CircularProgressIndicator()
+        : DropdownButtonFormField<String>(
+            value: _selectedCourseId,
+            decoration: const InputDecoration(
+              labelText: 'Select Course',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.school),
+            ),
+            hint: const Text('Choose a course'),
+            items: _courses.map<DropdownMenuItem<String>>((course) {
+              return DropdownMenuItem<String>(
+                value: course['id'].toString(),
+                child: Text(
+                  '${course['subject_code']} - ${course['subject_name']}',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              setState(() {
+                _selectedCourseId = newValue;
+                _selectedCourseName = _courses.firstWhere(
+                  (course) => course['id'].toString() == newValue,
+                  orElse: () => {'subject_name': ''},
+                )['subject_name'];
+              });
+            },
+            validator: (value) =>
+                value == null ? 'Please select a course' : null,
+          );
   }
 
   Widget _buildTextField(
@@ -221,7 +301,6 @@ class _SubmitGradeScreenState extends State<SubmitGradeScreen> {
   @override
   void dispose() {
     _userIdController.dispose();
-    _courseController.dispose();
     _semesterNoController.dispose();
     _creditsController.dispose();
     _marksController.dispose();
@@ -274,8 +353,6 @@ class _ViewGradesScreenState extends State<ViewGradesScreen> {
     if (response.statusCode == 200) {
       try {
         final data = json.decode(response.body);
-
-        // Handle both array and object responses
         if (data is List) {
           setState(() => _grades = data);
         } else if (data is Map && data.containsKey('data')) {
