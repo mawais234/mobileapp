@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 void main() {
   runApp(MyApp());
@@ -10,104 +8,114 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Firebase Realtime DB',
-      home: FirebasePage(),
+      title: 'Student Portal',
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(primarySwatch: Colors.green),
+      home: HomeScreen(),
     );
   }
 }
 
-class FirebasePage extends StatefulWidget {
-  @override
-  _FirebasePageState createState() => _FirebasePageState();
-}
-
-class _FirebasePageState extends State<FirebasePage> {
-  final TextEditingController _controller = TextEditingController();
-  final String firebaseUrl = 'https://umeh-bf31e-default-rtdb.firebaseio.com/data.json';
-  List<String> fetchedData = [];
-
-  Future<void> submitData() async {
-    final enteredText = _controller.text.trim();
-    if (enteredText.isEmpty) return;
-
-    try {
-      final response = await http.post(
-        Uri.parse(firebaseUrl),
-        body: json.encode(enteredText),
-      );
-
-      if (response.statusCode == 200) {
-        _controller.clear();
-        fetchData();
-      } else {
-        print('Error submitting: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Submit error: $e');
-    }
-  }
-
-  Future<void> fetchData() async {
-    try {
-      final response = await http.get(Uri.parse(firebaseUrl));
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic>? data = json.decode(response.body);
-        if (data != null) {
-          setState(() {
-            fetchedData = data.values.map((item) => item.toString()).toList();
-          });
-        }
-      } else {
-        print('Error fetching: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Fetch error: $e');
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    fetchData();
-  }
+class HomeScreen extends StatelessWidget {
+  final List<Map<String, String>> subjects = [
+    {
+      'subject': 'Data Structures',
+      'teacher': 'Mr. Ali Khan',
+      'credit': '3'
+    },
+    {
+      'subject': 'Database Systems',
+      'teacher': 'Ms. Fatima',
+      'credit': '4'
+    },
+    {
+      'subject': 'Operating Systems',
+      'teacher': 'Mr. Usman',
+      'credit': '3'
+    },
+    {
+      'subject': 'Web Development',
+      'teacher': 'Ms. Ayesha',
+      'credit': '3'
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Firebase Realtime Database')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
+      appBar: AppBar(
+        title: Text('Student Home'),
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
           children: [
-            TextField(
-              controller: _controller,
-              decoration: InputDecoration(
-                labelText: 'Enter text',
-                border: OutlineInputBorder(),
+            DrawerHeader(
+              decoration: BoxDecoration(color: Colors.green),
+              child: Text(
+                'Welcome Student!',
+                style: TextStyle(color: Colors.white, fontSize: 24),
               ),
             ),
-            SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: submitData,
-              child: Text('Submit'),
-            ),
-            SizedBox(height: 20),
-            Expanded(
-              child: fetchedData.isEmpty
-                  ? Center(child: Text('No data available'))
-                  : ListView.builder(
-                itemCount: fetchedData.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    leading: Icon(Icons.data_usage),
-                    title: Text(fetchedData[index]),
-                  );
-                },
-              ),
+            ListTile(
+              leading: Icon(Icons.flag),
+              title: Text('Pakistan Flag'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => FlagScreen()),
+                );
+              },
             ),
           ],
+        ),
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.all(10),
+            child: Image.asset(
+              'assets/home_image.png',
+              height: 150,
+              fit: BoxFit.cover,
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: subjects.length,
+              itemBuilder: (context, index) {
+                final subject = subjects[index];
+                return Card(
+                  margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  child: ListTile(
+                    leading: Icon(Icons.book, color: Colors.green),
+                    title: Text(subject['subject']!),
+                    subtitle: Text(
+                        'Teacher: ${subject['teacher']} | Credit Hours: ${subject['credit']}'),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class FlagScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Pakistan Flag'),
+      ),
+      body: Center(
+        child: Image.asset(
+          'assets/pakistan_flag.png',
+          width: 300,
+          height: 200,
+          fit: BoxFit.cover,
         ),
       ),
     );
