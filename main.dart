@@ -1,58 +1,37 @@
 import 'package:flutter/material.dart';
-import 'university_map.dart';
-import 'search_map.dart';
+import 'text_to_qr.dart';
+import 'qr_to_text.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: HomeScreen(),
+  ));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Baba Guru Nanak University Maps',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const MainScreen(),
-      debugShowCheckedModeBanner: false,
-    );
-  }
-}
-
-class MainScreen extends StatelessWidget {
-  const MainScreen({super.key});
-
+class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Baba Guru Nanak University Maps')),
+      appBar: AppBar(title: Text('QR Code Utility')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton(
+              child: Text('Convert Text to QR Code'),
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const UniversityMapScreen(),
-                  ),
-                );
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => TextToQrScreen()));
               },
-              child: const Text('View University Location'),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             ElevatedButton(
+              child: Text('Convert QR Code to Text'),
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const SearchMapScreen(),
-                  ),
-                );
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => QrToTextScreen()));
               },
-              child: const Text('Search Any Location'),
             ),
           ],
         ),
